@@ -1,0 +1,45 @@
+{
+    "name": "bashilbers/messaging",
+    "license": "MIT",
+    "type": "library",
+    "description": "Work queue library letting you run background tasks using a generic abstraction",
+    "keywords": ["work", "work queue", "task", "distributed", "background", "worker", "rabbitmq", "beanstalkd"],
+    "authors": [
+        {
+            "name": "Sebastiaan Hilbers",
+            "email": "bashilbers@gmail.com"
+        }
+    ],
+    "suggest": {
+        "pda/pheanstalk": "For Beanstalk bindings",
+        "videlalvaro/php-amqplib": "Driver for RabbitMQ",
+        "predis/predis": "For Redis bindings"
+    },
+    "require": {
+        "php": ">=5.3.0"
+    },
+    "require-dev": {
+        "phpunit/phpunit": "3.*",
+        "pda/pheanstalk": "3.*",
+        "videlalvaro/php-amqplib": "2.*",
+        "predis/predis": "1.*",
+        "phpmd/phpmd": "2.*",
+        "squizlabs/php_codesniffer": "2.*",
+        "fabpot/php-cs-fixer": "1.*"
+    },
+    "autoload": {
+        "psr-4": { 
+            "Messaging\\": "src"
+        }
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "Messaging\\Tests\\": "tests"
+        }
+    },
+    "scripts": {
+        "post-install-cmd": [
+            "bash contrib/setup.sh"
+        ]
+    }
+}

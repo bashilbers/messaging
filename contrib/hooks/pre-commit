@@ -1,0 +1,90 @@
+#!/bin/bash
+
+function error {
+  echo -e "\033[31mERROR\e[0m | $1" >&2 && exit 1;
+}
+
+function warning {
+  echo -e "\033[93mWARNING\e[0m | $1" >&2;
+}
+
+GITROOT=$(git rev-parse --show-toplevel)
+STAGED_FILES_CMD=`git diff --cached --name-only --diff-filter=ACMR HEAD | grep \\\\.php`
+SFILES=${SFILES:-$STAGED_FILES_CMD}
+
+# Determine if a file list is passed
+if [ "$#" -eq 1 ]
+then
+    oIFS=$IFS
+    IFS='
+    '
+    SFILES="$1"
+    IFS=$oIFS
+fi
+SFILES=${SFILES:-$STAGED_FILES_CMD}
+
+echo "Checking for PHP syntax errors..."
+for FILE in $SFILES
+do
+    php -l -d display_errors=0 $GITROOT/$FILE
+    if [ $? != 0 ]
+    then
+        error "Aborting commit due to files with syntax errors!"
+    fi
+    FILES="$FILES $GITROOT/$FILE"
+done
+
+if [ "$FILES" != "" ]
+then
+    echo "Running Code Sniffer..."
+    ./vendor/bin/phpcs --standard=PSR2 --encoding=utf-8 -n -p --ignore=*/spec/*,*/tests/*,*/vendor/* $FILES
+    if [ $? != 0 ]
+    then
+        error "Aborting commit due to files not respecting the coding standard"
+    fi
+fi
+
+if [ "$FILES" != "" ]
+then
+    echo "Running mess detector..."
+    for FILE in $SFILES
+    do
+        php ./vendor/bin/phpmd "$FILE" text controversial --exclude=/var/www/domain/spec/*
+        if [ $? != 0 ]
+        then
+            warning "Mess detected! Commit was not aborted"
+        fi
+    done
+fi
+
+if [ -f ./vendor/bin/phpspec ]
+then
+    echo "Running PHPSpec..."
+    ./vendor/bin/phpspec run
+    if [ $? -ne 0 ]
+    then
+       error "Aborting commit due to PHPspec complaining about your staged code"
+    fi
+fi
+
+if [ -f ./vendor/bin/phpunit ]
+then
+    echo "Running PHPunit..."
+    ./vendor/bin/phpunit tests
+    if [ $? -ne 0 ]
+    then
+       error "Aborting commit due to PHPunit complaining about your staged code"
+    fi
+fi
+
+if [ -f ./vendor/bin/php-cs-fixer ]
+then
+    echo "Running codestyle fixer in dry-run mode..."
+    ./vendor/bin/php-cs-fixer fix --verbose --dry-run --diff --level=psr2 src
+    if [ $? -ne 0 ]
+    then
+       error "PHPCS for src/ has failed - commit aborted"
+    fi
+fi
+
+exit $?

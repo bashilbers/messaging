@@ -1,0 +1,22 @@
+filter:
+  paths: [src/*]
+  excluded_paths: [vendor/*, tests/*]
+tools:
+  php_analyzer: true
+  php_mess_detector: true
+  php_changetracking: true
+  php_hhvm: true
+  php_pdepend: true
+  php_sim: true
+  sensiolabs_security_checker: true
+  php_code_sniffer:
+    enabled: true
+    config:
+      standard: PSR2
+  php_cs_fixer:
+    enabled: true
+    config:
+      level: psr2
+checks:
+  php:
+    code_rating: true
